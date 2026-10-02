@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivina el Pokémon por Tipos</title>
+    <!-- Favicon de Pokébola oficial integrado -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --error: #ef4444;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b, #312e81);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            background: linear-gradient(90deg, #f87171, #fbbf24, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .pokemon-display {
+            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(30,41,59,1) 70%);
+            border-radius: 16px;
+            height: 190px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pokemon-display img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            filter: brightness(0) invert(1); /* Silueta oculta antes de adivinar */
+            transition: filter 0.4s ease, transform 0.4s ease;
+        }
+
+        .pokemon-display img.revealed {
+            filter: brightness(1) invert(0);
+            transform: scale(1.05);
+        }
+
+        .types-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            min-height: 45px;
+            align-items: center;
+        }
+
+        .type-badge {
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Colores oficiales de Tipos Pokémon */
+        .type-normal { background-color: #959579; color: #fff; }
+        .type-fire { background-color: #f08030; color: #fff; }
+        .type-water { background-color: #6890f0; color: #fff; }
+        .type-grass { background-color: #78c850; color: #fff; }
+        .type-electric { background-color: #f8d030; color: #111; }
+        .type-ice { background-color: #98d8d8; color: #111; }
+        .type-fighting { background-color: #c03028; color: #fff; }
+        .type-poison { background-color: #a040a0; color: #fff; }
+        .type-ground { background-color: #e0c068; color: #111; }
+        .type-flying { background-color: #a890f0; color: #fff; }
+        .type-psychic { background-color: #f85888; color: #fff; }
+        .type-bug { background-color: #a8b820; color: #fff; }
+        .type-rock { background-color: #b8a038; color: #fff; }
+        .type-ghost { background-color: #705898; color: #fff; }
+        .type-dragon { background: linear-gradient(135deg, #53a2f8, #7038f8); color: #fff; }
+        .type-dark { background-color: #705848; color: #fff; }
+        .type-steel { background-color: #b8b8d0; color: #111; }
+        .type-fairy { background-color: #ee99ac; color: #111; }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background-color: #0f172a;
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent);
+        }
+
+        button.btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button.btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button.btn:active {
+            transform: scale(0.98);
+        }
+
+        .message {
+            margin-top: 15px;
+            font-weight: 600;
+            min-height: 24px;
+            font-size: 0.95rem;
+        }
+
+        .message.success { color: var(--success); }
+        .message.error { color: var(--error); }
+
+        .next-btn {
+            display: none;
+            width: 100%;
+            margin-top: 15px;
+            background-color: var(--success);
+        }
+        .next-btn:hover {
+            background-color: #16a34a;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Adivina el Pokémon</h1>
+        <p class="subtitle">El juego elige aleatoriamente los tipos, ¡adivina cuál es!</p>
+
+        <div class="score-board">
+            <div>Aciertos: <span id="score">0</span></div>
+            <div>Racha: <span id="streak">0</span></div>
+        </div>
+
+        <div class="pokemon-display">
+            <img id="pokemon-img" src="" alt="Silueta Pokémon">
+        </div>
+
+        <div class="types-container" id="types-container">
+            <!-- Tipos generados dinámicamente -->
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="guess-input" placeholder="Nombre del Pokémon..." autocomplete="off">
+            <button class="btn" id="submit-btn" onclick="checkGuess()">Adivinar</button>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <button class="btn next-btn" id="next-btn" onclick="loadNewPokemon()">Siguiente Pokémon</button>
+    </div>
+
+    <script>
+        const pokemonList = [
+            { name: "bulbasaur", types: ["grass", "poison"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png" },
+            { name: "ivysaur", types: ["grass", "poison"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/2.png" },
+            { name: "venusaur", types: ["grass", "poison"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/3.png" },
+            { name: "charmander", types: ["fire"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png" },
+            { name: "charizard", types: ["fire", "flying"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png" },
+            { name: "squirtle", types: ["water"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png" },
+            { name: "blastoise", types: ["water"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/9.png" },
+            { name: "pikachu", types: ["electric"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
+            { name: "gengar", types: ["ghost", "poison"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/94.png" },
+            { name: "gyarados", types: ["water", "flying"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/130.png" },
+            { name: "snorlax", types: ["normal"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png" },
+            { name: "mewtwo", types: ["psychic"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png" },
+            { name: "typhlosion", types: ["fire"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/157.png" },
+            { name: "feraligatr", types: ["water"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/160.png" },
+            { name: "lucario", types: ["fighting", "steel"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/448.png" },
+            { name: "garchomp", types: ["dragon", "ground"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/445.png" },
+            { name: "greninja", types: ["water", "dark"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/658.png" },
+            { name: "mimikyu", types: ["ghost", "fairy"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/778.png" },
+            { name: "corviknight", types: ["flying", "steel"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/823.png" },
+            { name: "skeledirge", types: ["fire", "ghost"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/911.png" },
+            { name: "meowscarada", types: ["grass", "dark"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/908.png" },
+            { name: "quaquaval", types: ["water", "fighting"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/914.png" },
+            { name: "meowth de alola", types: ["dark"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10109.png" },
+            { name: "meowth de galar", types: ["steel"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10161.png" },
+            { name: "vulpix de alola", types: ["ice"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10103.png" },
+            { name: "wooper de paldea", types: ["poison", "ground"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10253.png" },
+            { name: "mega charizard x", types: ["fire", "dragon"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10034.png" },
+            { name: "mega charizard y", types: ["fire", "flying"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10035.png" },
+            { name: "mega lucario", types: ["fighting", "steel"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10059.png" },
+            { name: "mega gengar", types: ["ghost", "poison"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10038.png" },
+            { name: "mega rayquaza", types: ["dragon", "flying"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10079.png" },
+            { name: "charizard gigamax", types: ["fire", "flying"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10196.png" },
+            { name: "pikachu gigamax", types: ["electric"], sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/10193.png" }
+        ];
+
+        let currentPokemon = null;
+        let score = 0;
+        let streak = 0;
+        let gameOver = false;
+
+        function loadNewPokemon() {
+            gameOver = false;
+            document.getElementById('message').textContent = '';
+            document.getElementById('message').className = 'message';
+            document.getElementById('guess-input').value = '';
+            document.getElementById('guess-input').disabled = false;
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('next-btn').style.display = 'none';
+
+            const imgElement = document.getElementById('pokemon-img');
+            imgElement.classList.remove('revealed');
+
+            const randomIndex = Math.floor(Math.random() * pokemonList.length);
+            currentPokemon = pokemonList[randomIndex];
+
+            imgElement.src = currentPokemon.sprite;
+
+            const typesContainer = document.getElementById('types-container');
+            typesContainer.innerHTML = '';
+            
+            currentPokemon.types.forEach(type => {
+                const badge = document.createElement('div');
+                badge.className = `type-badge type-${type}`;
+                badge.textContent = type;
+                typesContainer.appendChild(badge);
+            });
+        }
+
+        function checkGuess() {
+            if (gameOver) return;
+
+            const userGuess = document.getElementById('guess-input').value.trim().toLowerCase();
+            const messageEl = document.getElementById('message');
+
+            if (!userGuess) {
+                messageEl.textContent = "Escribe un nombre de Pokémon.";
+                messageEl.className = "message error";
+                return;
+            }
+
+            if (userGuess === currentPokemon.name.toLowerCase()) {
+                score++;
+                streak++;
+                messageEl.textContent = `¡Correcto! Es ${currentPokemon.name.toUpperCase()} 🎉`;
+                messageEl.className = "message success";
+                finishRound();
+            } else {
+                streak = 0;
+                messageEl.textContent = `¡Fallaste! Era ${currentPokemon.name.toUpperCase()} ❌`;
+                messageEl.className = "message error";
+                finishRound();
+            }
+
+            updateScoreBoard();
+        }
+
+        function finishRound() {
+            gameOver = true;
+            document.getElementById('guess-input').disabled = true;
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('pokemon-img').classList.add('revealed');
+            document.getElementById('next-btn').style.display = 'block';
+        }
+
+        function updateScoreBoard() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('streak').textContent = streak;
+        }
+
+        document.getElementById('guess-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkGuess();
+            }
+        });
+
+        loadNewPokemon();
+    </script>
+</body>
+</html>
